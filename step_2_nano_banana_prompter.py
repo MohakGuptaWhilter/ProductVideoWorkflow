@@ -12,7 +12,7 @@ load_dotenv()
 with open("config.yaml","r") as f:
     config = yaml.safe_load(f)
 
-nano_banana_prompt = config["nano_banana_technical_prompter"]
+nano_banana_prompt = config["nano_banana_prompter_2"]
 
 nano_banana_prompter = Agent(
     name = nano_banana_prompt["name"],
