@@ -36,23 +36,24 @@ def upload_to_s3(local_path: str, bucket: str, key: str) -> str:
 def _generate_single_image(
     shot_id: int,
     prompt: str,
-    product_image_path: str,
+    product_image_s3_url: str,   # 👈 S3 URL now
     bucket: str,
     s3_prefix: str,
     aspect_ratio: str = "9:16",
     resolution: str = "2k",
 ) -> str:
 
-
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
-    os.makedirs("tmp", exist_ok=True)
-    local_path = f"tmp/shot_{shot_id}.png"
+    # ⬇️ Fetch image from S3 URL
+    resp = requests.get(product_image_s3_url, timeout=30)
+    resp.raise_for_status()
 
-    # 🔒 Load product image fresh per thread
-    with Image.open(product_image_path) as product_image:
+    image_bytes = io.BytesIO(resp.content)
+
+    with Image.open(image_bytes) as product_image:
         product_image.load()
 
         response = client.models.generate_content(
@@ -67,17 +68,18 @@ def _generate_single_image(
             ),
         )
 
+    # Save generated image locally (temporary)
+    os.makedirs("tmp", exist_ok=True)
+    local_path = f"tmp/shot_{shot_id}.png"
+
     for part in response.parts:
         image = part.as_image()
-        if image is not None:
+        if image:
             image.save(local_path)
 
-    # ☁️ Upload to S3
+    # ☁️ Upload generated image to S3
     s3_key = f"{s3_prefix}/shot_{shot_id}.png"
     s3_url = upload_to_s3(local_path, bucket, s3_key)
-
-    # 🧹 Cleanup
-    # os.remove(local_path)
 
     return s3_url
 

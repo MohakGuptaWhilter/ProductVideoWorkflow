@@ -1,5 +1,5 @@
 from pydantic import BaseModel,HttpUrl, Field, RootModel
-from typing import List
+from typing import List, Optional, Dict, Any
 
 class MasterSetup(BaseModel):
     environment: str
@@ -122,3 +122,49 @@ class FrameTransition(BaseModel):
 
 class FrameTransitionList(BaseModel):
     RootModel: List[FrameTransition]
+
+class BrandPrism(BaseModel):
+    Physique: str
+    Relationship: str
+    Reflection: str
+    Self-Image: str
+    Culture: str
+    Personality: str
+
+
+class Color(BaseModel):
+    hex: str
+    type: str
+    name: str
+
+
+class BrandInfo(BaseModel):
+    brand_prism: BrandPrism
+    fonts: List[str]
+    colors: List[Color]
+    logos: List[str]
+
+
+class ProductInfo(BaseModel):
+    product_name: str
+    product_description: str
+    features: str
+    product_images: List[str]
+
+
+class MicroBriefInner(BaseModel):
+    id: int
+    persona: str
+    reasonToBuy: str
+    awarenessLevel: str
+    brief: str
+    mediaType: str
+    mediaStyle: Optional[str]
+    mediaOrientation: str
+
+
+class MicroBrief(BaseModel):
+    campaign_id: int
+    brand_info: BrandInfo
+    product_info: ProductInfo
+    micro_brief: MicroBriefInner
