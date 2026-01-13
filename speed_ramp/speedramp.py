@@ -114,6 +114,7 @@ def process_video_from_s3_to_s3(
     Returns:
         str: Output S3 URL
     """
+    print("Inside step 9: speed ramp")
 
     workdir = tempfile.mkdtemp()
     try:

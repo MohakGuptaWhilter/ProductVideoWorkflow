@@ -11,6 +11,8 @@ async def upload_kling_video_to_s3(
     bucket: str,
     prefix: str = "kling-videos/",
 ) -> str:
+    print("Inside step 10: videos upload to s3")
+
     """
     Downloads Kling video and uploads to S3.
     Returns public S3 URL.

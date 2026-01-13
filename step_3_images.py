@@ -11,6 +11,7 @@ import boto3
 from urllib.parse import quote_plus    
 from google import genai
 from google.genai import types
+import requests
 
 
 MAX_CONCURRENT_GENERATIONS = 4 
@@ -36,7 +37,7 @@ def upload_to_s3(local_path: str, bucket: str, key: str) -> str:
 def _generate_single_image(
     shot_id: int,
     prompt: str,
-    product_image_s3_url: str,   # 👈 S3 URL now
+    product_image_path: str,   # 👈 ALWAYS "product.png"
     bucket: str,
     s3_prefix: str,
     aspect_ratio: str = "9:16",
@@ -45,16 +46,14 @@ def _generate_single_image(
 
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+    if not os.path.exists(product_image_path):
+        raise FileNotFoundError(f"Product image not found: {product_image_path}")
 
-    # ⬇️ Fetch image from S3 URL
-    resp = requests.get(product_image_s3_url, timeout=30)
-    resp.raise_for_status()
-
-    image_bytes = io.BytesIO(resp.content)
-
-    with Image.open(image_bytes) as product_image:
+    # ---------- LOAD LOCAL IMAGE ----------
+    with Image.open(product_image_path) as product_image:
         product_image.load()
+
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
         response = client.models.generate_content(
             model="gemini-3-pro-image-preview",
@@ -68,7 +67,7 @@ def _generate_single_image(
             ),
         )
 
-    # Save generated image locally (temporary)
+    # ---------- SAVE TEMP OUTPUT ----------
     os.makedirs("tmp", exist_ok=True)
     local_path = f"tmp/shot_{shot_id}.png"
 
@@ -76,8 +75,9 @@ def _generate_single_image(
         image = part.as_image()
         if image:
             image.save(local_path)
+            break
 
-    # ☁️ Upload generated image to S3
+    # ---------- UPLOAD TO S3 ----------
     s3_key = f"{s3_prefix}/shot_{shot_id}.png"
     s3_url = upload_to_s3(local_path, bucket, s3_key)
 
@@ -92,37 +92,41 @@ async def generate_nano_banana_images_async(
     aspect_ratio: str = "9:16",
     resolution: str = "1k",
 ) -> Dict[int, str | None]:
+    # try:
+        print("Inside image generation: nano banana")
 
-    semaphore = asyncio.Semaphore(MAX_CONCURRENT_GENERATIONS)
-    prompts: List[Dict[str, Any]] = prompt_payload["prompts"]
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_GENERATIONS)
+        prompts: List[Dict[str, Any]] = prompt_payload["prompts"]
 
-    async def run_one(item):
-        async with semaphore:
-            return await asyncio.to_thread(
-                _generate_single_image,
-                item["shot_id"],
-                item["prompt"],
-                product_image_path,
-                bucket,
-                s3_prefix,
-                aspect_ratio,
-                resolution,
-            )
+        async def run_one(item):
+            async with semaphore:
+                return await asyncio.to_thread(
+                    _generate_single_image,
+                    item["shot_id"],
+                    item["prompt"],
+                    product_image_path,
+                    bucket,
+                    s3_prefix,
+                    aspect_ratio,
+                    resolution,
+                )
 
-    tasks = [run_one(item) for item in prompts]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+        tasks = [run_one(item) for item in prompts]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    output: Dict[int, str | None] = {}
+        output: Dict[int, str | None] = {}
 
-    for item, result in zip(prompts, results):
-        shot_id = item["shot_id"]
-        if isinstance(result, Exception):
-            print(f"❌ Shot {shot_id} failed: {result}")
-            output[shot_id] = None
-        else:
-            output[shot_id] = result
+        for item, result in zip(prompts, results):
+            shot_id = item["shot_id"]
+            if isinstance(result, Exception):
+                print(f"❌ Shot {shot_id} failed: {result}")
+                output[shot_id] = None
+            else:
+                output[shot_id] = result
 
-    return output
+        return output
+    # except Exception as e:
+    #     raise RuntimeError(f"Image generation failed: {e}") from e
 
 
 if __name__=="__main__":

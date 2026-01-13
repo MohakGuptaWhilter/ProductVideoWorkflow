@@ -33,18 +33,23 @@ def image_to_data_url(path: str) -> str:
 
 
 async def run_meta_performance_visual_strategist(microbrief:str):
-    # image_url = image_to_data_url(img_path)
-    messages = f"Microbrief: {microbrief}"
-    result = await Runner.run(
-        meta_performance,
-        input=messages
-    )
+    try:
+        # image_url = image_to_data_url(img_path)
+        print("Inside first agent: meta performance visual strategist")
+        messages = f"Microbrief: {microbrief}"
+        result = await Runner.run(
+            meta_performance,
+            input=messages
+        )
 
-    first_agent_output = result.final_output.model_dump()
-    with open('first_agent.json','w') as f:
-        json.dump(first_agent_output,f,indent=4)
-    return first_agent_output
-
+        first_agent_output = result.final_output.model_dump()
+        with open('first_agent.json','w') as f:
+            json.dump(first_agent_output,f,indent=4)
+        return first_agent_output
+    except Exception as e:
+        print(e)
+        raise
+        
 if __name__=="__main__":
     microbrief ={
         "product_info": {

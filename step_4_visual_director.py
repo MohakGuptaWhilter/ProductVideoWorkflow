@@ -42,16 +42,21 @@ visual_director_agent = Agent(
 
 
 async def run_visual_director(input_img:dict):
-    inputStr = json.dumps(input_img)
+    try:
+        print("Inside fourth agent: run visual director for ad")
+        inputStr = json.dumps(input_img)
 
-    output = await Runner.run(visual_director_agent,inputStr)
+        output = await Runner.run(visual_director_agent,inputStr)
 
-    result =output.final_output.model_dump()
+        result =output.final_output.model_dump()
 
-    with open('fourth_agent.json','w') as f:
-        json.dump(result,f,indent=4)
-    
-    return result
+        with open('fourth_agent.json','w') as f:
+            json.dump(result,f,indent=4)
+        
+        return result
+    except Exception as e:
+        print(str(e))
+        raise
 
 
 if __name__ == "__main__":

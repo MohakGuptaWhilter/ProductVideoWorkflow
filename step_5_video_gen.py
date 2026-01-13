@@ -24,16 +24,22 @@ video_gen_agent = Agent(
 )
 
 async def run_video_generation(input_prompt:dict):
-    inputStr = json.dumps(input_prompt)
+    try:
+        print("Inside fifth agent: run video generation for ad")
 
-    output = await Runner.run(video_gen_agent,inputStr)
+        inputStr = json.dumps(input_prompt)
 
-    result =output.final_output.model_dump()
+        output = await Runner.run(video_gen_agent,inputStr)
 
-    with open('fifth_agent.json','w') as f:
-        json.dump(result,f,indent=4)
-    
-    return result
+        result =output.final_output.model_dump()
+
+        with open('fifth_agent.json','w') as f:
+            json.dump(result,f,indent=4)
+        
+        return result
+    except Exception as e:
+        print(str(e))
+        raise
 
 
 if __name__ == "__main__":

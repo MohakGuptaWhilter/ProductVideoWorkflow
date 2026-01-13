@@ -8,16 +8,22 @@ import yaml
 from agents import Agent, Runner, function_tool
 
 def s3urls_fifth_agent(images:dict):
+    print("Inside step6 : modify image urls for s3urls")
+
     return {
         "s3-urls": list(images.values())
     }
 
 def merge(images:dict, video_gen:dict):
-    output = []
-    s3urls = s3urls_fifth_agent(images)
-    output.append(s3urls)
-    output.append(video_gen)
-    return output
+    try:
+        output = []
+        s3urls = s3urls_fifth_agent(images)
+        output.append(s3urls)
+        output.append(video_gen)
+        return output
+    except Exception as e:
+        print(str(e))
+        raise
 
 if __name__=="__main__":
     r1=None

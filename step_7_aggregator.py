@@ -24,22 +24,27 @@ frame_transition_agent = Agent(
 )
 
 async def run_frame_transition(whole:dict):
+    try:
     # with open('merged.json','r') as f:
     #     whole = json.load(f)
-    
-    messages =(
-        f"Image_urls: {json.dumps(whole[0]["s3-urls"])}"
-        f"Pairs: {json.dumps(whole[1]["video_generation_tasks"])}"
-    )
+        print("Inside step 7 agent: run frame transition for ad")
+        
+        messages =(
+            f"Image_urls: {json.dumps(whole[0]["s3-urls"])}"
+            f"Pairs: {json.dumps(whole[1]["video_generation_tasks"])}"
+        )
 
-    print(messages)
-    output = await Runner.run(frame_transition_agent,messages)
-    result = output.final_output.model_dump()
+        print(messages)
+        output = await Runner.run(frame_transition_agent,messages)
+        result = output.final_output.model_dump()
 
-    with open('video_prompts_final.json','w') as f:
-        json.dump(result,f, indent=4)
+        with open('video_prompts_final.json','w') as f:
+            json.dump(result,f, indent=4)
 
-    return result
+        return result
+    except Exception as e:
+        print(str(e))
+        raise
 
 if __name__=="__main__":
     with open('merged.json','r') as f:

@@ -24,52 +24,59 @@ async def generate_kling_video_async(
     first_image_url: str,
     last_image_url: str,
 ):
+    
     """
     Generates a video using Kling multi-image image2video API.
     """
+    try:
+        print("Inside step 8: kling video for ad")
 
-    payload = {
-    "model_name": "kling-video-o1",      # better model than kling-v1 [web:64][web:82]
-    "prompt": prompt,
-    "image_list": [
-            {
-                "image_url": first_image_url,
-                "type": "first_frame",
-            },
-            {
-                "image_url": last_image_url,
-                "type": "end_frame",
-            },
-        ],
-        "mode": "pro",                       # high-quality mode [web:64]
-    }
+        payload = {
+        "model_name": "kling-video-o1",      # better model than kling-v1 [web:64][web:82]
+        "prompt": prompt,
+        "image_list": [
+                {
+                    "image_url": first_image_url,
+                    "type": "first_frame",
+                },
+                {
+                    "image_url": last_image_url,
+                    "type": "end_frame",
+                },
+            ],
+            "mode": "pro",                       # high-quality mode [web:64]
+        }
 
-    async def _post(headers):
-        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
-            return await client.post(
-                KLING_API_URL,
-                headers=headers,
-                json=payload,
+        async def _post(headers):
+            async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
+                return await client.post(
+                    KLING_API_URL,
+                    headers=headers,
+                    json=payload,
+                )
+
+        # ---- First attempt ----
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {KLING_API_KEY}",
+        }
+
+        response = await _post(headers)
+
+
+        # ---- Final error handling ----
+        if response.status_code >= 400:
+            raise RuntimeError(
+                f"[Video] Kling API failed "
+                f"({response.status_code}): {response.text}"
             )
 
-    # ---- First attempt ----
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {KLING_API_KEY}",
-    }
+        print(f"✅ Kling video task created successfully")
+        return response.json()
+    except Exception as e:
+        print(str(e))
+        raise
 
-    response = await _post(headers)
-
-
-    # ---- Final error handling ----
-    if response.status_code >= 400:
-        raise RuntimeError(
-            f"[Video] Kling API failed "
-            f"({response.status_code}): {response.text}"
-        )
-
-    print(f"✅ Kling video task created successfully")
-    return response.json()
 
 async def query_multi_image2video_task(
     task_id: str | None = None,

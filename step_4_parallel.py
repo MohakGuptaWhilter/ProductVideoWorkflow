@@ -15,26 +15,29 @@ def build_image_prompt_array(data: Dict) -> List[Dict[str, str]]:
         ...
     ]
     """
+    try:
+        shots = data.get("shots", [])
+        output: List[Dict[str, str]] = []
 
-    shots = data.get("shots", [])
-    output: List[Dict[str, str]] = []
+        for idx, shot in enumerate(shots):
+            shot_id = shot.get("shot_id")
+            magnification = shot.get("magnification")
+            visual_description = shot.get("visual_description")
 
-    for idx, shot in enumerate(shots):
-        shot_id = shot.get("shot_id")
-        magnification = shot.get("magnification")
-        visual_description = shot.get("visual_description")
+            formatted_prompt = (
+                f"shot_id:{shot_id}\n"
+                f"magnification:{magnification}\n"
+                f"visual_description:{visual_description}"
+            )
 
-        formatted_prompt = (
-            f"shot_id:{shot_id}\n"
-            f"magnification:{magnification}\n"
-            f"visual_description:{visual_description}"
-        )
+            output.append({
+                f"image_{idx}": formatted_prompt
+            })
 
-        output.append({
-            f"image_{idx}": formatted_prompt
-        })
-
-    return output
+        return output
+    except Exception as e:
+        print(str(e))
+        raise
 
 if __name__=="__main__":
     with open('first_agent.json',"r") as f:

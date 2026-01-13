@@ -1,5 +1,5 @@
 from pydantic import BaseModel,HttpUrl, Field, RootModel
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Optional
 
 class MasterSetup(BaseModel):
     environment: str
@@ -127,23 +127,27 @@ class BrandPrism(BaseModel):
     Physique: str
     Relationship: str
     Reflection: str
-    Self-Image: str
+    self_image: str = Field(..., alias="Self-Image")   
     Culture: str
     Personality: str
 
+class Font(BaseModel):
+    name: str
+    type: str
 
 class Color(BaseModel):
     hex: str
     type: str
-    name: str
 
+class Logo(BaseModel):
+    theme: str
+    url: str
 
 class BrandInfo(BaseModel):
     brand_prism: BrandPrism
-    fonts: List[str]
+    fonts: List[Font]
     colors: List[Color]
-    logos: List[str]
-
+    logos: List[Logo]
 
 class ProductInfo(BaseModel):
     product_name: str
@@ -151,20 +155,21 @@ class ProductInfo(BaseModel):
     features: str
     product_images: List[str]
 
-
-class MicroBriefInner(BaseModel):
+class MicroBrief(BaseModel):
     id: int
-    persona: str
+    persona: str                 # stringified JSON
     reasonToBuy: str
     awarenessLevel: str
-    brief: str
+    brief: str                   # stringified JSON
+    status: str
     mediaType: str
     mediaStyle: Optional[str]
     mediaOrientation: str
+    script: str
+    assets: List[str]
 
-
-class MicroBrief(BaseModel):
+class CampaignRequest(BaseModel):
     campaign_id: int
     brand_info: BrandInfo
     product_info: ProductInfo
-    micro_brief: MicroBriefInner
+    micro_brief: MicroBrief

@@ -22,18 +22,24 @@ nano_banana_prompter = Agent(
 )
 
 async def run_nano_banana_prompter(jsonOutput: dict):
-    jsonStr = json.dumps(jsonOutput)
-    messages = jsonStr
+    try:
+        print("Inside second agent: nano banana prompter 2")
 
-    nano_banana_prompts = await Runner.run(
-        nano_banana_prompter, input=jsonStr
-    )
+        jsonStr = json.dumps(jsonOutput)
+        messages = jsonStr
 
-    result = nano_banana_prompts.final_output.model_dump()
+        nano_banana_prompts = await Runner.run(
+            nano_banana_prompter, input=jsonStr
+        )
 
-    with open('second_agent.json','w') as f:
-        json.dump(result,f, indent=4)
-    return result
+        result = nano_banana_prompts.final_output.model_dump()
+
+        with open('second_agent.json','w') as f:
+            json.dump(result,f, indent=4)
+        return result
+    except Exception as e:
+        print(str(e))
+        raise
 
 if __name__=="__main__":
     jsonDict = None
